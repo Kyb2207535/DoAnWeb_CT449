@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   resolve: {
     alias: {
-      "@": "/src", // Định nghĩa alias cho src
+      "@": "/src", 
     },
   },
   plugins: [vue()],

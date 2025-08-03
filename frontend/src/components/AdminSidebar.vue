@@ -60,7 +60,7 @@
 
 <script>
 export default {
-    name: 'AdminLayout',
+    name: 'AdminSidebar',
 }
 </script>
 
