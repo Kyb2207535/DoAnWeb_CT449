@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../components/AdminLayout.vue";
 import DocGia from "../views/admin/DocGia.vue";
+import NhaXuatBan from "../views/admin/NhaXuatBan.vue";
+import Sach from "../views/admin/Sach.vue";
+import MuonTra from "../views/admin/MuonTra.vue";
 
 const routes = [
   {
@@ -15,22 +18,22 @@ const routes = [
       {
         path: "docgia",
         name: "docgia",
-        component: DocGia
+        component: DocGia,
       },
       {
         path: "sach",
         name: "sach",
-        // component: () => import("@/views/admin/Sach.vue"),
+        component: Sach,
       },
       {
         path: "nhaxuatban",
         name: "nhaxuatban",
-        // component: () => import("@/views/admin/NhaXuatBan.vue"),
+        component: NhaXuatBan,
       },
       {
         path: "theodoimuonsach",
         name: "theodoimuonsach",
-        // component: () => import("@/views/admin/TheoDoiMuonSach.vue"),
+        component: MuonTra,
       },
       { path: "", redirect: "/admin/sach" },
     ],

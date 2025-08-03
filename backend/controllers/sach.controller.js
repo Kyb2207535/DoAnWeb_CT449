@@ -1,4 +1,5 @@
 const Sach = require("../models/sach");
+const { generateIncrementalCode } = require("../utils/code.generator");
 
 exports.getAll = async (req, res) => {
   const saches = await Sach.find();
@@ -13,7 +14,18 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const newSach = new Sach(req.body);
+    const maSach = await generateIncrementalCode(Sach, "maSach", "S", 3);
+
+    const newSach = new Sach({
+      maSach,
+      tenSach: req.body.tenSach,
+      donGia: req.body.donGia,
+      soQuyen: req.body.soQuyen,
+      namXuatBan: req.body.namXuatBan,
+      maNXB: req.body.maNXB,
+      tacGia: req.body.tacGia, 
+    });
+
     await newSach.save();
     res.status(201).json(newSach);
   } catch (err) {
@@ -22,11 +34,21 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const updated = await Sach.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  if (!updated) return res.status(404).json({ error: "Không tìm thấy sách" });
-  res.json(updated);
+  try {
+    const existing = await Sach.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ error: "Không tìm thấy" });
+    }
+
+    // Không cho cập nhật maSach
+    const { maSach, ...updates } = req.body;
+    Object.assign(existing, updates);
+
+    const updated = await existing.save();
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 exports.remove = async (req, res) => {

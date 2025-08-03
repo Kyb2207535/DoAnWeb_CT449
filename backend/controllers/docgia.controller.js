@@ -1,4 +1,5 @@
 const DocGia = require("../models/docgia");
+const { generateIncrementalCode } = require("../utils/code.generator");
 
 exports.getAll = async (req, res) => {
   const list = await DocGia.find();
@@ -13,7 +14,18 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const newDocGia = new DocGia(req.body);
+    const maDocGia = await generateIncrementalCode(DocGia, "maDocGia", "DG", 3);
+
+    const newDocGia = new DocGia({
+      maDocGia,
+      hoLot: req.body.hoLot,
+      ten: req.body.ten,
+      ngaySinh: req.body.ngaySinh,
+      phai: req.body.phai,
+      diaChi: req.body.diaChi,
+      dienThoai: req.body.dienThoai,
+    });
+
     await newDocGia.save();
     res.status(201).json(newDocGia);
   } catch (err) {
@@ -22,12 +34,24 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const updated = await DocGia.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-  if (!updated) return res.status(404).json({ error: "Không tìm thấy" });
-  res.json(updated);
+  try {
+    const existingDocGia = await DocGia.findById(req.params.id);
+    if (!existingDocGia) {
+      return res.status(404).json({ error: "Không tìm thấy" });
+    }
+
+    // Không cho phép cập nhật mã độc giả
+    const { maDocGia, ...otherUpdates } = req.body;
+
+    Object.assign(existingDocGia, otherUpdates);
+    const updated = await existingDocGia.save();
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
+
 
 exports.remove = async (req, res) => {
   const deleted = await DocGia.findByIdAndDelete(req.params.id);

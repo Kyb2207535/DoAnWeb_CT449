@@ -5,7 +5,7 @@ const DocGiaSchema = new mongoose.Schema({
   hoLot: String,
   ten: String,
   ngaySinh: Date,
-  phai: { type: String, enum: ["Nam", "Nữ"] },
+  phai: { type: String, enum: ["Male", "Female"] },
   diaChi: String,
   dienThoai: String,
 });

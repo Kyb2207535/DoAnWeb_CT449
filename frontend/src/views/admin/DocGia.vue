@@ -1,17 +1,28 @@
 <template>
-    <div class="reader-container">
+    <div class="doc-gia-container">
+
+
         <div class="header-container">
             <h2>READER MANAGEMENT</h2>
             <button class="btn-add" @click="openAddModal">
                 <i class="bi bi-plus-circle me-1"></i> Add Reader
             </button>
         </div>
-        <!-- <div class="stats-container">
+        <!-- Statistic Card -->
+        <div class="stats-container">
             <div class="stat-card">
                 <h4>Total Readers</h4>
                 <p class="stat-value">{{ totalDocGia }}</p>
             </div>
-        </div> -->
+            <div class="stat-card">
+                <h4>Male Readers</h4>
+                <p class="stat-value">{{ soDocGiaNam }}</p>
+            </div>
+            <div class="stat-card">
+                <h4>Female Readers</h4>
+                <p class="stat-value">{{ soDocGiaNu }}</p>
+            </div>
+        </div>
         <!-- Popup Modal -->
         <div v-if="showModal" class="modal-overlay" @click.self="resetForm">
             <div class="modal-content">
@@ -21,10 +32,6 @@
                 </div>
                 <form @submit.prevent="handleSubmit">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label>Reader ID <span class="required">*</span></label>
-                            <input v-model="form.maDocGia" type="text" :readonly="isEditing" required>
-                        </div>
                         <div class="form-group">
                             <label>Middle Name</label>
                             <input v-model="form.hoLot" type="text">
@@ -80,7 +87,7 @@
                     <thead>
                         <tr>
                             <th>No.</th>
-                            <th>Reader ID</th>
+                            <th>Reader Code</th>
                             <th>Full Name</th>
                             <th>Date of Birth</th>
                             <th>Gender</th>
@@ -113,17 +120,16 @@
 </template>
 
 <script>
-import axios from 'axios'
 import { toast } from 'vue3-toastify'
+import { api } from '@/api.js'
 
 export default {
-    name: 'ReaderPage',
+    name: 'DocGia',
     data() {
         return {
             docgiaList: [],
             searchQuery: '',
             form: {
-                maDocGia: '',
                 hoLot: '',
                 ten: '',
                 ngaySinh: '',
@@ -134,7 +140,9 @@ export default {
             isEditing: false,
             currentId: null,
             showModal: false,
-            totalDocGia: 0
+            totalDocGia: 0,
+            soDocGiaNam: 0,
+            soDocgiaNu: 0
         }
     },
     computed: {
@@ -155,9 +163,11 @@ export default {
     methods: {
         async fetchDocGia() {
             try {
-                const response = await axios.get('http://localhost:3000/api/docgia')
+                const response = await api.get('/docgia');
                 this.docgiaList = response.data
                 this.totalDocGia = response.data.length
+                this.soDocGiaNam = response.data.filter(docGia => docGia.phai === 'Male').length;
+                this.soDocGiaNu = response.data.filter(docGia => docGia.phai === 'Female').length;
             } catch (error) {
                 this.showError('Error loading reader list', error)
             }
@@ -165,10 +175,10 @@ export default {
         async handleSubmit() {
             try {
                 if (this.isEditing) {
-                    await axios.put(`http://localhost:3000/api/docgia/${this.currentId}`, this.form)
+                    await api.put(`/docgia/${this.currentId}`, this.form);
                     toast.success('Reader updated successfully')
                 } else {
-                    await axios.post('http://localhost:3000/api/docgia', this.form)
+                    await api.post('/docgia', this.form);
                     toast.success('Reader added successfully')
                 }
                 this.resetForm()
@@ -179,7 +189,6 @@ export default {
         },
         editDocGia(docgia) {
             this.form = {
-                maDocGia: docgia.maDocGia,
                 hoLot: docgia.hoLot,
                 ten: docgia.ten,
                 ngaySinh: this.formatDateForInput(docgia.ngaySinh),
@@ -198,7 +207,7 @@ export default {
         },
         async deleteDocGia(id) {
             try {
-                await axios.delete(`http://localhost:3000/api/docgia/${id}`)
+                await api.delete(`/docgia/${id}`);
                 toast.success('Reader deleted successfully')
                 await this.fetchDocGia()
             } catch (error) {
@@ -207,7 +216,6 @@ export default {
         },
         resetForm() {
             this.form = {
-                maDocGia: '',
                 hoLot: '',
                 ten: '',
                 ngaySinh: '',
