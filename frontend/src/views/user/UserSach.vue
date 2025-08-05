@@ -20,6 +20,12 @@
         <!-- Book List -->
         <div class="book-grid">
             <div v-for="sach in filteredSach" :key="sach._id" class="book-card">
+                <div class="book-image-container">
+                    <img v-if="sach.image"
+                        :src="`http://localhost:3000/image/book_images/${encodeURIComponent(sach.image)}`"
+                        :alt="`Image of ${sach.tenSach}`" class="book-image">
+                    <span v-else class="no-image">No Image</span>
+                </div>
                 <div class="book-info">
                     <h3>{{ sach.tenSach }}</h3>
                     <p><strong>Author:</strong> {{ sach.tacGia || 'Unknown' }}</p>
@@ -29,6 +35,7 @@
                 <button v-if="sach.soQuyen > 0" class="btn-borrow" @click="borrowBook(sach.maSach)">
                     <i class="bi bi-book me-1"></i> Borrow
                 </button>
+                <button v-else class="btn-notify" :disabled="true"> Out of Book </button>
             </div>
         </div>
     </div>
@@ -53,6 +60,7 @@ export default {
         filteredSach() {
             const query = this.searchQuery.toLowerCase();
             return this.sachList.filter(sach => {
+                if (!sach || !sach.tenSach || !sach.maSach) return false;
                 const matchesSearch =
                     sach.tenSach.toLowerCase().includes(query) ||
                     (sach.tacGia && sach.tacGia.toLowerCase().includes(query));
@@ -71,7 +79,8 @@ export default {
         async fetchSach() {
             try {
                 const response = await api.get('/sach');
-                this.sachList = response.data;
+                this.sachList = response.data.filter(sach => sach && sach.tenSach && sach.maSach);
+                console.log('Sach list with images:', this.sachList.map(s => ({ tenSach: s.tenSach, image: s.image })));
             } catch (error) {
                 this.showError('Error loading book list', error);
             }
@@ -108,7 +117,7 @@ export default {
             }
         },
         getPublisherName(maNXB) {
-            const nxb = this.nxbList.find(nxb => nxb.maNXB === maNXB);
+            const nxb = this.nxbList.find(nxb => nxb && nxb.maNXB === maNXB);
             return nxb ? nxb.tenNXB : 'Unknown';
         },
         showError(message, error) {
@@ -117,7 +126,7 @@ export default {
             if (error.response?.data?.error) {
                 toast.error(error.response.data.error);
             }
-        }
+        },
     }
 }
 </script>
@@ -212,7 +221,7 @@ export default {
 
 .book-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.75rem;
     padding: 1rem;
 }
@@ -235,6 +244,32 @@ export default {
     border-color: #60A5FA;
 }
 
+.book-image-container {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F8FAFC;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.book-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    padding: 0.5rem;
+}
+
+.no-image {
+    color: #6B7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
 .book-info h3 {
     color: #1A2A44;
     margin: 0 0 0.75rem;
@@ -254,10 +289,11 @@ export default {
     color: #1A2A44;
 }
 
-.btn-borrow {
+.btn-borrow,
+.btn-notify {
     background: #F4A261;
     color: #FFFFFF;
-    padding: 0.85rem 1.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 10px;
     border: none;
     font-weight: 500;
@@ -269,6 +305,7 @@ export default {
     gap: 0.5rem;
 }
 
+
 .btn-borrow:hover {
     background: #E76F51;
     color: #FFFFFF;
@@ -276,7 +313,16 @@ export default {
     box-shadow: 0 4px 12px rgba(231, 111, 81, 0.3);
 }
 
-.btn-borrow i {
+.btn-notify:disabled {
+    background: #D1D5DB; 
+    color: #9CA3AF;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-borrow i,
+.btn-notify i {
     font-size: 1rem;
 }
 </style>

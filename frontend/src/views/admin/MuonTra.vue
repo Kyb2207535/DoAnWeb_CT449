@@ -70,18 +70,6 @@
                             <input v-model.number="form.soNgayMuon" type="number" min="1" placeholder="Default: 7"
                                 class="number-input">
                         </div>
-                        <div v-if="isEditing" class="form-group">
-                            <label>Actual Return Date</label>
-                            <div class="return-date-container">
-                                <button type="button" class="btn-mark-returned" @click="markAsReturned"
-                                    :disabled="form.ngayTraThucTe">
-                                    <i class="bi bi-check-circle me-1"></i> Mark as Returned
-                                </button>
-                                <span v-if="form.ngayTraThucTe" class="return-date-display">
-                                    {{ formatDate(form.ngayTraThucTe) }}
-                                </span>
-                            </div>
-                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn-primary">
@@ -119,7 +107,7 @@
                             <th>Borrow Date</th>
                             <th>Duration</th>
                             <th>Due Date</th>
-                            <th>Actual Return Date</th>
+                            <th>Returned</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -131,7 +119,10 @@
                             <td>{{ formatDate(muontra.ngayMuon) }}</td>
                             <td>{{ muontra.soNgayMuon }}</td>
                             <td>{{ formatDate(muontra.ngayTra) }}</td>
-                            <td>{{ formatDate(muontra.ngayTraThucTe) || 'Not Returned' }}</td>
+                            <td>
+                                <input type="checkbox" class="return-checkbox" :checked="!!muontra.ngayTraThucTe"
+                                    @change="toggleReturnStatus(muontra._id, $event.target.checked)">
+                            </td>
                             <td>
                                 <button @click="editMuonTra(muontra)" class="btn-icon btn-edit">
                                     <i class="bi bi-pencil"></i>
@@ -149,11 +140,12 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { api } from '@/api';
 import { toast } from 'vue3-toastify';
 import { debounce } from 'lodash';
 
-export default {
+export default defineComponent({
     name: 'MuonTra',
     data() {
         return {
@@ -169,8 +161,7 @@ export default {
                 maDocGia: '',
                 maSach: [],
                 ngayMuon: '',
-                soNgayMuon: 7,
-                ngayTraThucTe: null
+                soNgayMuon: 7
             },
             isEditing: false,
             currentId: null,
@@ -248,8 +239,7 @@ export default {
                         maDocGia: this.form.maDocGia,
                         maSach: this.form.maSach[0],
                         ngayMuon: this.form.ngayMuon,
-                        soNgayMuon: this.form.soNgayMuon,
-                        ngayTraThucTe: this.form.ngayTraThucTe || null
+                        soNgayMuon: this.form.soNgayMuon
                     };
                     await api.put(`/muontra/${this.currentId}`, payload);
                     toast.success('Borrow record updated successfully');
@@ -271,6 +261,23 @@ export default {
                 this.showError('Error saving borrow record', error);
             }
         },
+        async toggleReturnStatus(id, isReturned) {
+            try {
+                const muontra = this.muontraList.find(item => item._id === id);
+                const payload = {
+                    maDocGia: muontra.maDocGia,
+                    maSach: muontra.maSach,
+                    ngayMuon: muontra.ngayMuon,
+                    soNgayMuon: muontra.soNgayMuon,
+                    ngayTraThucTe: isReturned ? new Date().toISOString().split('T')[0] : null
+                };
+                await api.put(`/muontra/${id}`, payload);
+                toast.success('Return status updated successfully');
+                await this.fetchMuonTra();
+            } catch (error) {
+                this.showError('Error updating return status', error);
+            }
+        },
         addBook() {
             if (this.selectedBook && !this.form.maSach.includes(this.selectedBook)) {
                 this.form.maSach.push(this.selectedBook);
@@ -281,16 +288,12 @@ export default {
         removeBook(index) {
             this.form.maSach.splice(index, 1);
         },
-        markAsReturned() {
-            this.form.ngayTraThucTe = new Date().toISOString().split('T')[0];
-        },
         editMuonTra(muontra) {
             this.form = {
                 maDocGia: muontra.maDocGia,
                 maSach: [muontra.maSach],
                 ngayMuon: this.formatDateForInput(muontra.ngayMuon),
-                soNgayMuon: muontra.soNgayMuon,
-                ngayTraThucTe: muontra.ngayTraThucTe ? this.formatDateForInput(muontra.ngayTraThucTe) : null
+                soNgayMuon: muontra.soNgayMuon
             };
             this.isEditing = true;
             this.currentId = muontra._id;
@@ -319,8 +322,7 @@ export default {
                 maDocGia: '',
                 maSach: [],
                 ngayMuon: '',
-                soNgayMuon: 7,
-                ngayTraThucTe: null
+                soNgayMuon: 7
             };
             this.readerSearch = '';
             this.bookSearch = '';
@@ -359,6 +361,6 @@ export default {
             }
         }
     }
-}
+});
 </script>
 <style scoped src="@/assets/MuonTra.css"></style>

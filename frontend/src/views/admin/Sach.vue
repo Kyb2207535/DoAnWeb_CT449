@@ -1,6 +1,5 @@
 <template>
     <div class="sach-container">
-
         <div class="header-container">
             <h2>BOOK MANAGEMENT</h2>
             <button class="btn-add" @click="openAddModal">
@@ -57,6 +56,16 @@
                             <label>Author</label>
                             <input v-model="form.tacGia" type="text">
                         </div>
+                        <div class="form-group full-width">
+                            <label>Book Image</label>
+                            <input type="file" accept="image/*" @change="handleImageUpload" class="image-input">
+                            <div v-if="imagePreview || form.image" class="image-preview">
+                                <img :src="imagePreview || `/image/book_images/${form.image}`" alt="Book Image">
+                                <button v-if="form.image" type="button" class="btn-remove-image" @click="removeImage">
+                                    <i class="bi bi-trash"></i> Remove Image
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn-primary">
@@ -84,6 +93,7 @@
                     <thead>
                         <tr>
                             <th>No.</th>
+                            <!-- <th>Image</th> -->
                             <th>Book Code</th>
                             <th>Book Name</th>
                             <th>Price</th>
@@ -97,6 +107,11 @@
                     <tbody>
                         <tr v-for="(sach, index) in filteredSach" :key="sach._id">
                             <td>{{ index + 1 }}</td>
+                            <!-- <td>
+                                <img v-if="sach.image" :src="`/image/book_images/${sach.image}`" alt="Book Image"
+                                    class="book-image">
+                                <span v-else>No Image</span>
+                            </td> -->
                             <td>{{ sach.maSach }}</td>
                             <td>{{ sach.tenSach }}</td>
                             <td>{{ formatCurrency(sach.donGia) }}</td>
@@ -121,10 +136,11 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import { api } from '@/api';
 import { toast } from 'vue3-toastify';
 
-export default {
+export default defineComponent({
     name: 'SachPage',
     data() {
         return {
@@ -137,14 +153,16 @@ export default {
                 soQuyen: '',
                 namXuatBan: '',
                 maNXB: '',
-                tacGia: ''
+                tacGia: '',
+                image: ''
             },
+            imagePreview: '',
             isEditing: false,
             currentId: null,
             showModal: false,
             totalSachTheoDauMuc: 0,
             totalSach: 0
-        }
+        };
     },
     computed: {
         filteredSach() {
@@ -187,11 +205,28 @@ export default {
         },
         async handleSubmit() {
             try {
+                const formData = new FormData();
+                formData.append('tenSach', this.form.tenSach);
+                formData.append('donGia', this.form.donGia);
+                formData.append('soQuyen', this.form.soQuyen);
+                formData.append('namXuatBan', this.form.namXuatBan);
+                formData.append('maNXB', this.form.maNXB);
+                formData.append('tacGia', this.form.tacGia);
+                if (this.imagePreview) {
+                    formData.append('image', this.form.imageFile);
+                } else if (this.form.image) {
+                    formData.append('image', this.form.image);
+                }
+
                 if (this.isEditing) {
-                    await api.put(`/sach/${this.currentId}`, this.form);
+                    await api.put(`/sach/${this.currentId}`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
                     toast.success('Book updated successfully');
                 } else {
-                    await api.post('/sach', this.form);
+                    await api.post('/sach', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
                     toast.success('Book added successfully');
                 }
                 this.resetForm();
@@ -200,6 +235,19 @@ export default {
                 this.showError('Error saving book data', error);
             }
         },
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.form.imageFile = file;
+                this.imagePreview = URL.createObjectURL(file);
+                this.form.image = file.name;
+            }
+        },
+        removeImage() {
+            this.form.image = '';
+            this.form.imageFile = null;
+            this.imagePreview = '';
+        },
         editSach(sach) {
             this.form = {
                 tenSach: sach.tenSach,
@@ -207,8 +255,11 @@ export default {
                 soQuyen: sach.soQuyen,
                 namXuatBan: sach.namXuatBan,
                 maNXB: sach.maNXB,
-                tacGia: sach.tacGia
+                tacGia: sach.tacGia,
+                image: sach.image || '',
+                imageFile: null
             };
+            this.imagePreview = '';
             this.isEditing = true;
             this.currentId = sach._id;
             this.showModal = true;
@@ -234,8 +285,11 @@ export default {
                 soQuyen: '',
                 namXuatBan: '',
                 maNXB: '',
-                tacGia: ''
+                tacGia: '',
+                image: '',
+                imageFile: null
             };
+            this.imagePreview = '';
             this.isEditing = false;
             this.currentId = null;
             this.showModal = false;
@@ -260,6 +314,6 @@ export default {
             }
         }
     }
-}
+});
 </script>
 <style scoped src="@/assets/Sach.css"></style>
