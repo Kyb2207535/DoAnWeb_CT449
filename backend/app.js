@@ -26,6 +26,7 @@ const sachRoutes = require("./routes/sach.routes");
 const nxbRoutes = require("./routes/nhaxuatban.routes");
 const muonTraRoutes = require("./routes/muontra.routes");
 const nhanVienRoutes = require("./routes/nhanvien.routes");
+const authRoutes = require("./routes/auth.routes");
 app.use("/image", express.static(path.join(__dirname, "public/image")));
 
 // Gắn route
@@ -34,6 +35,7 @@ app.use("/api/sach", sachRoutes);
 app.use("/api/nhaxuatban", nxbRoutes);
 app.use("/api/muontra", muonTraRoutes);
 app.use("/api/nhanvien", nhanVienRoutes);
+app.use("/api/auth", authRoutes);
 
 app.listen(config.port, () => {
   console.log(`Server đang chạy tại http://localhost:${config.port}`);

@@ -74,8 +74,10 @@ onUnmounted(() => {
 
 function logout() {
     localStorage.removeItem('user');
+    setTimeout(() => {
+        this.$router.push('/');
+    }, 800);
     toast.success('Logged out successfully');
-    router.push('/login');
 }
 </script>
 

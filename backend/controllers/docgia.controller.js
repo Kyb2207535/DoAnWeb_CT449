@@ -1,4 +1,7 @@
 const DocGia = require("../models/docgia");
+const TaiKhoan = require("../models/taikhoan");
+const bcrypt = require("bcrypt");
+
 const { generateIncrementalCode } = require("../utils/code.generator");
 
 exports.getAll = async (req, res) => {
@@ -27,7 +30,25 @@ exports.create = async (req, res) => {
     });
 
     await newDocGia.save();
-    res.status(201).json(newDocGia);
+
+    // Tạo tài khoản với mật khẩu đã hash
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const maTaiKhoan = await generateIncrementalCode(
+      TaiKhoan,
+      "maTaiKhoan",
+      "TK",
+      3
+    );
+    const newTaiKhoan = new TaiKhoan({
+      maTaiKhoan,
+      dienThoai: req.body.dienThoai,
+      matKhau: hashedPassword,
+      maDocGia: maDocGia,
+    });
+
+    await newTaiKhoan.save();
+    res.status(201).json({ docGia: newDocGia, taiKhoan: newTaiKhoan });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -40,9 +61,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: "Không tìm thấy" });
     }
 
-    // Không cho phép cập nhật mã độc giả
     const { maDocGia, ...otherUpdates } = req.body;
-
     Object.assign(existingDocGia, otherUpdates);
     const updated = await existingDocGia.save();
 
@@ -54,7 +73,20 @@ exports.update = async (req, res) => {
 
 
 exports.remove = async (req, res) => {
-  const deleted = await DocGia.findByIdAndDelete(req.params.id);
-  if (!deleted) return res.status(404).json({ error: "Không tìm thấy" });
-  res.json({ message: "Đã xóa" });
+  try {
+    const deletedDocGia = await DocGia.findByIdAndDelete(req.params.id);
+    if (!deletedDocGia) {
+      return res.status(404).json({ error: "Không tìm thấy độc giả" });
+    }
+
+    // Xóa bản ghi TaiKhoan liên quan dựa trên maDocGia
+    const deletedTaiKhoan = await TaiKhoan.findOneAndDelete({
+      maDocGia: deletedDocGia.maDocGia,
+    });
+    
+
+    res.json({ message: "Đã xóa độc giả và tài khoản liên quan" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };

@@ -1,0 +1,76 @@
+.user-muon-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    background: #F5F5F5;
+    font-family: 'Inter', sans-serif;
+    padding: 2rem;
+}
+
+.card {
+    width: 100%;
+    max-width: 1000px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    background: #1A2A44;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 1rem;
+    color: #FFFFFF;
+    text-align: center;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+    color: #1A2A44;
+}
+
+.table th {
+    font-weight: 500;
+    background: #F5F5F5;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background: #F9FAFB;
+}
+
+.badge.bg-success {
+    background: #34D399;
+}
+
+.badge.bg-warning {
+    background: #F4A261;
+}
+
+.alert-info {
+    background: #E0F2FE;
+    color: #1A2A44;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.spinner-border {
+    color: #F4A261;
+}

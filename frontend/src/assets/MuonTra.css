@@ -465,6 +465,7 @@ h2 {
     vertical-align: middle;
     position: relative;
     transition: all 0.2s ease;
+    margin-left: 26px;
 }
 
 .return-checkbox:checked {
