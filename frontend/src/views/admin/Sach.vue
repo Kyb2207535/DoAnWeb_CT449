@@ -17,6 +17,10 @@
                 <h4>Total Books</h4>
                 <p class="stat-value">{{ totalSach }}</p>
             </div>
+            <div class="stat-card">
+                <h4>Available Books</h4>
+                <p class="stat-value">{{ availableSach }}</p>
+            </div>
         </div>
 
         <!-- Popup Modal -->
@@ -37,7 +41,7 @@
                             <input v-model.number="form.donGia" type="number" min="0">
                         </div>
                         <div class="form-group">
-                            <label>Quantity</label>
+                            <label>Total Quantity</label>
                             <input v-model.number="form.soQuyen" type="number" min="0">
                         </div>
                         <div class="form-group">
@@ -93,11 +97,11 @@
                     <thead>
                         <tr>
                             <th>No.</th>
-                            <!-- <th>Image</th> -->
                             <th>Book Code</th>
                             <th>Book Name</th>
                             <th>Price</th>
-                            <th>Quantity</th>
+                            <th>Total Quantity</th>
+                            <th>Available Quantity</th>
                             <th>Pub. Year</th>
                             <th>Publisher</th>
                             <th>Author</th>
@@ -107,15 +111,11 @@
                     <tbody>
                         <tr v-for="(sach, index) in filteredSach" :key="sach._id">
                             <td>{{ index + 1 }}</td>
-                            <!-- <td>
-                                <img v-if="sach.image" :src="`/image/book_images/${sach.image}`" alt="Book Image"
-                                    class="book-image">
-                                <span v-else>No Image</span>
-                            </td> -->
                             <td>{{ sach.maSach }}</td>
                             <td>{{ sach.tenSach }}</td>
                             <td>{{ formatCurrency(sach.donGia) }}</td>
                             <td>{{ sach.soQuyen }}</td>
+                            <td>{{ getAvailableQuantity(sach.maSach) }}</td>
                             <td>{{ sach.namXuatBan }}</td>
                             <td>{{ getPublisherName(sach.maNXB) }}</td>
                             <td>{{ sach.tacGia }}</td>
@@ -146,6 +146,7 @@ export default defineComponent({
         return {
             sachList: [],
             nxbList: [],
+            muontraList: [],
             searchQuery: '',
             form: {
                 tenSach: '',
@@ -154,14 +155,16 @@ export default defineComponent({
                 namXuatBan: '',
                 maNXB: '',
                 tacGia: '',
-                image: ''
+                image: '',
+                imageFile: null
             },
             imagePreview: '',
             isEditing: false,
             currentId: null,
             showModal: false,
             totalSachTheoDauMuc: 0,
-            totalSach: 0
+            totalSach: 0,
+            availableSach: 0
         };
     },
     computed: {
@@ -183,6 +186,7 @@ export default defineComponent({
     created() {
         this.fetchSach();
         this.fetchNXB();
+        this.fetchMuonTra();
     },
     methods: {
         async fetchSach() {
@@ -191,6 +195,7 @@ export default defineComponent({
                 this.sachList = response.data;
                 this.totalSachTheoDauMuc = response.data.length;
                 this.totalSach = response.data.reduce((total, sach) => total + sach.soQuyen, 0);
+                this.updateAvailableSach();
             } catch (error) {
                 this.showError('Error loading book list', error);
             }
@@ -202,6 +207,27 @@ export default defineComponent({
             } catch (error) {
                 this.showError('Error loading publisher list', error);
             }
+        },
+        async fetchMuonTra() {
+            try {
+                const response = await api.get('/muontra');
+                this.muontraList = response.data;
+                this.updateAvailableSach();
+            } catch (error) {
+                this.showError('Error loading borrow record list', error);
+            }
+        },
+        updateAvailableSach() {
+            this.availableSach = this.sachList.reduce((total, sach) => {
+                return total + this.getAvailableQuantity(sach.maSach);
+            }, 0);
+        },
+        getAvailableQuantity(maSach) {
+            const borrowedCount = this.muontraList.filter(muontra =>
+                muontra.maSach === maSach && !muontra.ngayTraThucTe
+            ).length;
+            const sach = this.sachList.find(s => s.maSach === maSach);
+            return sach ? sach.soQuyen - borrowedCount : 0;
         },
         async handleSubmit() {
             try {

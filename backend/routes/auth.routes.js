@@ -21,49 +21,68 @@ async function connectDB() {
 router.post("/login", async (req, res) => {
   const { dienThoai, password } = req.body;
 
-  // Validate request body
+  // Kiểm tra xem có cung cấp đầy đủ thông tin đăng nhập không
   if (!dienThoai || !password) {
     return res
       .status(400)
-      .json({ error: "Please enter all required information." });
+      .json({ error: "Vui lòng nhập đầy đủ thông tin đăng nhập." });
   }
 
   try {
     const db = await connectDB();
     const taiKhoanCollection = db.collection("taikhoans");
+    const nhanVienCollection = db.collection("nhanviens");
     const docGiaCollection = db.collection("docgias");
 
-    // Find account by dienThoai
+    // 🔍 Kiểm tra xem có phải là NhanVien (Admin) không
+    const nhanVien = await nhanVienCollection.findOne({
+      soDienThoai: dienThoai,
+    });
+    if (nhanVien) {
+      const isMatch = await bcrypt.compare(password, nhanVien.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Sai thông tin đăng nhập." });
+      }
+
+      // Trả về thông tin admin với role
+      return res.status(200).json({
+        role: "admin",
+        maNhanVien: nhanVien.maNhanVien,
+        hoTen: nhanVien.hoTen,
+      });
+    }
+
+    // 🔍 Kiểm tra TaiKhoan (User)
     const account = await taiKhoanCollection.findOne({ dienThoai });
     if (!account) {
-      return res
-        .status(401)
-        .json({ error: "Login failed. Please check your credentials." });
+      return res.status(401).json({ error: "Sai thông tin đăng nhập." });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, account.matKhau);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ error: "Login failed. Please check your credentials." });
+      return res.status(401).json({ error: "Sai thông tin đăng nhập." });
     }
 
-    // Get DocGia info by maDocGia
+    // Lấy thông tin độc giả
     const docGia = await docGiaCollection.findOne({
       maDocGia: account.maDocGia,
     });
     if (!docGia) {
-      return res.status(404).json({ error: "User not found." });
+      return res.status(404).json({ error: "Không tìm thấy độc giả." });
     }
 
-    // Return user data (excluding password)
-    const { matKhau, ...accountData } = account;
+    // ✅ Đăng nhập thành công → trả về role và toàn bộ thông tin docGia (trừ _id) cùng maTaiKhoan
     const { _id, ...docGiaData } = docGia;
-    res.status(200).json({ ...docGiaData, maTaiKhoan: account.maTaiKhoan });
+    return res.status(200).json({
+      role: "user",
+      ...docGiaData,
+      maTaiKhoan: account.maTaiKhoan,
+    });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Login failed. Please try again later." });
+    console.error("Lỗi đăng nhập:", error);
+    return res
+      .status(500)
+      .json({ error: "Đăng nhập thất bại. Vui lòng thử lại sau." });
   }
 });
 

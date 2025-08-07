@@ -1,4 +1,5 @@
 const MuonTra = require("../models/muontra");
+const Sach = require("../models/sach");
 
 exports.getAll = async (req, res) => {
   const data = await MuonTra.find();

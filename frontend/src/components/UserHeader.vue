@@ -56,8 +56,9 @@ const isScrolled = ref(false);
 // Kiểm tra đăng nhập dựa trên maDocGia trong localStorage
 const isLoggedIn = computed(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return !!user.maDocGia;
+    return !!user.maDocGia || (!!user.role && user.role === 'admin' && !!user.maNhanVien);
 });
+
 
 // Xử lý fixed header khi cuộn
 const handleScroll = () => {
@@ -75,6 +76,7 @@ onUnmounted(() => {
 function logout() {
     localStorage.removeItem('user');
     setTimeout(() => {
+        window.location.reload();
         this.$router.push('/');
     }, 800);
     toast.success('Logged out successfully');

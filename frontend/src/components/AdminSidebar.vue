@@ -45,8 +45,8 @@
                 <div class="header-content">
                     <h4>{{ currentPageTitle }}</h4>
                     <div class="user-info">
-                        <span>Hello, Admin</span>
-                        <button class="btn-logout">Logout</button>
+                        <span>Hello, {{ userName }}</span>
+                        <button class="btn-logout" @click="logout">Logout</button>
                     </div>
                 </div>
             </header>
@@ -61,6 +61,24 @@
 <script>
 export default {
     name: 'AdminSidebar',
+    data() {
+        return {
+            userName: 'Admin' 
+        }
+    },
+    created() {
+        // Get user info from localStorage
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.hoTen) {
+            this.userName = user.hoTen;
+        }
+    },
+    methods: {
+        logout() {
+            localStorage.removeItem('user');
+            this.$router.push('/');
+        }
+    }
 }
 </script>
 

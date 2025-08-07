@@ -41,8 +41,6 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    console.log("req.body:", req.body); // Log dữ liệu đầu vào
-
     const existing = await NhanVien.findById(req.params.id);
     if (!existing) {
       return res.status(404).json({ error: "Không tìm thấy nhân viên" });
@@ -61,21 +59,16 @@ exports.update = async (req, res) => {
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
         existing.password = hashedPassword;
-        console.log("Hashed password:", hashedPassword); // Log mật khẩu đã mã hóa
       } catch (hashError) {
         return res
           .status(500)
           .json({ error: "Lỗi khi mã hóa mật khẩu: " + hashError.message });
       }
-    } else {
-      console.log("Không có mật khẩu mới, giữ nguyên mật khẩu cũ");
-    }
+    } 
 
     const updated = await existing.save();
-    console.log("Updated document:", updated); // Log tài liệu sau khi lưu
     res.json(updated);
   } catch (err) {
-    console.error("Lỗi trong hàm update:", err); // Log lỗi chi tiết
     res.status(400).json({ error: err.message });
   }
 };

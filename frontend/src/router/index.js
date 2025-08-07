@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { toast } from "vue3-toastify";
 
 // Admin
 import AdminSidebar from "../components/AdminSidebar.vue";
@@ -22,6 +23,7 @@ const routes = [
   {
     path: "/admin",
     component: AdminSidebar,
+    meta: { requiresAdmin: true },
     children: [
       {
         path: "nhanvien",
@@ -56,7 +58,7 @@ const routes = [
   },
   {
     path: "/",
-    component: UserHeader, 
+    component: UserHeader,
     children: [
       {
         path: "",
@@ -90,6 +92,35 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+// Bảo vệ route theo vai trò
+router.beforeEach((to, from, next) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Nếu tuyến yêu cầu quyền admin
+  if (to.meta.requiresAdmin) {
+    if (!user || user.role !== "admin") {
+      toast.error("Access denied. Administrators only.");
+      setTimeout(() => {
+        next("/");
+      }, 2000); 
+      return;
+    }
+    return next(); // Cho phép admin tiếp tục
+  }
+
+  // Nếu đã đăng nhập và truy cập /login, chuyển hướng theo vai trò
+  if (to.name === "login" && user) {
+    if (user.role === "admin") {
+      return next("/admin/sach");
+    } else {
+      return next("/");
+    }
+  }
+
+  // Cho phép truy cập các tuyến khác (tuyến người dùng hoặc /login)
+  return next();
 });
 
 export default router;

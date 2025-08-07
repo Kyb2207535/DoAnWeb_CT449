@@ -184,10 +184,10 @@ export default {
                     return;
                 }
 
-                // Create payload, excluding maNhanVien when adding new
+                // Create payload
                 const payload = {
                     hoTen: this.form.hoTen,
-                    ...(this.form.password && !this.isEditing && { password: this.form.password }),
+                    ...(this.form.password && { password: this.form.password }), // Gửi password nếu có giá trị
                     ...(this.form.chucVu && { chucVu: this.form.chucVu }),
                     ...(this.form.soDienThoai && { soDienThoai: this.form.soDienThoai }),
                     ...(this.form.diaChi && { diaChi: this.form.diaChi })
@@ -206,7 +206,7 @@ export default {
                 await this.fetchNhanVien();
             } catch (error) {
                 const errorMessage = error.response?.data?.error || 'Error saving employee';
-                console.error('Error response:', error.response?.data); // Debug error from backend
+                console.error('Error response:', error.response?.data);
                 this.showError(errorMessage, error);
             }
         },
